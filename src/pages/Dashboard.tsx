@@ -12,7 +12,8 @@ import {
   Wallet,
   Landmark,
   ShieldCheck,
-  Database
+  Database,
+  Plus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format, parseISO, addMonths, addYears, isAfter, isBefore } from 'date-fns';
@@ -98,6 +99,59 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleCSVImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n').filter(line => line.trim() !== '');
+      if (lines.length < 2) return;
+
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const dataLines = lines.slice(1);
+      let successCount = 0;
+
+      for (const line of dataLines) {
+        const values = line.split(',').map(v => v.trim());
+        const row: any = {};
+        headers.forEach((h, i) => row[h] = values[i]);
+
+        if (!row.bank) continue;
+
+        try {
+          // Find or create bank
+          let bankId = '';
+          const existingBanks = banks?.filter(b => b.name.toLowerCase() === row.bank.toLowerCase());
+          if (existingBanks && existingBanks.length > 0) {
+            bankId = existingBanks[0].id;
+          } else {
+            const newBank = await addBank.mutateAsync(row.bank);
+            bankId = newBank.id;
+          }
+
+          // Add FD
+          await addFD.mutateAsync({
+            bankId,
+            holderName: row.holder || user.displayName || 'Unknown',
+            accountNumber: row.account || '',
+            principalAmount: Number(row.principal) || 0,
+            interestRate: Number(row.interest) || 0,
+            startDate: row.start || format(new Date(), 'yyyy-MM-dd'),
+            maturityDate: row.maturity || format(addYears(new Date(), 1), 'yyyy-MM-dd'),
+            status: 'ACTIVE'
+          });
+          successCount++;
+        } catch (err) {
+          console.error("Error importing row:", line, err);
+        }
+      }
+      alert(`Import complete! Successfully added ${successCount} records.`);
+    };
+    reader.readAsText(file);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -117,14 +171,26 @@ const Dashboard: React.FC = () => {
           <p className="text-muted-foreground text-lg">Welcome back, {user?.displayName || 'Abhijit'}!</p>
         </motion.div>
 
-        {(user?.email === 'abhijit.harry@gmail.com' || user?.email === 'testuser@arc.com') && (
-          <button 
-            onClick={seedTestData}
-            className="flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 rounded-xl font-bold border border-accent/20 hover:bg-accent/20 transition-all interactive-scale"
-          >
-            <Database className="w-4 h-4" />
-            Seed Test Data
-          </button>
+        {(user?.email === 'abhijit.harry@gmail.com' || user?.email === 'testuser@arc.com' || user?.email === 'raosaheb.c4@gmail.com') && (
+          <div className="flex gap-3">
+            <label className="flex items-center gap-2 bg-secondary/10 text-secondary px-4 py-2 rounded-xl font-bold border border-secondary/20 hover:bg-secondary/20 transition-all cursor-pointer interactive-scale">
+              <Plus className="w-4 h-4" />
+              Import CSV
+              <input 
+                type="file" 
+                accept=".csv" 
+                className="hidden" 
+                onChange={(e) => handleCSVImport(e)}
+              />
+            </label>
+            <button 
+              onClick={seedTestData}
+              className="flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 rounded-xl font-bold border border-accent/20 hover:bg-accent/20 transition-all interactive-scale"
+            >
+              <Database className="w-4 h-4" />
+              Reset & Seed
+            </button>
+          </div>
         )}
       </div>
 

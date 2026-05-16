@@ -122,5 +122,13 @@ export const useFirestoreMutations = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['banks'] }),
   });
 
-  return { addBank, addFD, updateFD, deleteBank };
+  const deleteFD = useMutation({
+    mutationFn: async (id: string) => {
+      if (!user) throw new Error('Not authenticated');
+      return deleteDoc(doc(db, 'fixedDeposits', id));
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['fixedDeposits'] }),
+  });
+
+  return { addBank, addFD, updateFD, deleteBank, deleteFD };
 };

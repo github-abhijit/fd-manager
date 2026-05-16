@@ -11,7 +11,7 @@ import RenewalWizard from '../components/inventory/RenewalWizard';
 const Inventory: React.FC = () => {
   const { data: banks, isLoading: banksLoading } = useBanks();
   const { data: fds } = useFixedDeposits();
-  const { deleteBank } = useFirestoreMutations();
+  const { deleteBank, deleteFD } = useFirestoreMutations();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
   
@@ -49,6 +49,16 @@ const Inventory: React.FC = () => {
         await deleteBank.mutateAsync(id);
       } catch (err) {
         alert("Failed to delete bank");
+      }
+    }
+  };
+
+  const handleDeleteFD = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this FD record?')) {
+      try {
+        await deleteFD.mutateAsync(id);
+      } catch (err) {
+        alert("Failed to delete record");
       }
     }
   };
@@ -274,6 +284,7 @@ const Inventory: React.FC = () => {
                       formatCurrency={formatCurrency}
                       onEdit={() => handleEditFD(fd)}
                       onRenew={() => handleRenewFD(fd)}
+                      onDelete={() => handleDeleteFD(fd.id)}
                     />
                   ))}
                 </AnimatePresence>
@@ -299,7 +310,7 @@ const Inventory: React.FC = () => {
   );
 };
 
-const FDCard = ({ fd, formatCurrency, onEdit, onRenew }: { fd: any, formatCurrency: any, onEdit: () => void, onRenew: () => void }) => (
+const FDCard = ({ fd, formatCurrency, onEdit, onRenew, onDelete }: { fd: any, formatCurrency: any, onEdit: () => void, onRenew: () => void, onDelete: () => void }) => (
   <motion.div
     layout
     initial={{ opacity: 0, scale: 0.9 }}
@@ -321,9 +332,14 @@ const FDCard = ({ fd, formatCurrency, onEdit, onRenew }: { fd: any, formatCurren
           <h3 className="font-bold text-xl truncate">{fd.holderName}</h3>
           <p className="text-xs text-muted-foreground font-medium">A/C: {fd.accountNumber || '••••••••'}</p>
         </div>
-        <button onClick={onEdit} className="p-2 hover:bg-primary/10 rounded-xl transition-colors opacity-0 group-hover:opacity-100">
-          <Edit2 className="w-4 h-4 text-primary" />
-        </button>
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={onEdit} className="p-2 hover:bg-primary/10 rounded-xl transition-colors">
+            <Edit2 className="w-4 h-4 text-primary" />
+          </button>
+          <button onClick={onDelete} className="p-2 hover:bg-destructive/10 rounded-xl transition-colors">
+            <Trash2 className="w-4 h-4 text-destructive" />
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 bg-primary/5 p-4 rounded-2xl border border-primary/10">
