@@ -57,6 +57,7 @@ const Dashboard: React.FC = () => {
       const headers = splitCSV(lines[0]);
       const dataLines = lines.slice(1);
       let successCount = 0;
+      const localBankCache: Record<string, string> = {};
 
       for (const line of dataLines) {
         const values = splitCSV(line);
@@ -65,19 +66,28 @@ const Dashboard: React.FC = () => {
           if (values[i] !== undefined) row[h.trim()] = values[i];
         });
 
-        const bankName = row['Name'] || row['Bank'] || row['bank'];
-        const principal = row['AMT'] || row['Principal'] || row['principal'];
+        const bankName = row['Bank'] || row['Name'] || row['bank'];
+        const principal = row['Principal'] || row['AMT'] || row['principal'];
         
         if (!bankName || !principal) continue;
 
         try {
+          // Find or create bank with local cache to prevent race condition
           let bankId = '';
-          const existingBanks = banks?.filter(b => b.name.toLowerCase() === bankName.toLowerCase());
-          if (existingBanks && existingBanks.length > 0) {
-            bankId = existingBanks[0].id;
+          const normalizedBankName = bankName.toLowerCase();
+          
+          // Check existing banks from Firestore
+          const existingBank = banks?.find(b => b.name.toLowerCase() === normalizedBankName);
+          
+          if (existingBank) {
+            bankId = existingBank.id;
+          } else if (localBankCache[normalizedBankName]) {
+            bankId = localBankCache[normalizedBankName];
           } else {
+            // Create new bank and cache it immediately
             const newBank = await addBank.mutateAsync(bankName);
             bankId = newBank.id;
+            localBankCache[normalizedBankName] = bankId;
           }
 
           const parseDate = (d: string) => {
