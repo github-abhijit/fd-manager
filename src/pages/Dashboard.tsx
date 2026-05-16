@@ -109,37 +109,48 @@ const Dashboard: React.FC = () => {
       const lines = text.split('\n').filter(line => line.trim() !== '');
       if (lines.length < 2) return;
 
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const headers = lines[0].split(',').map(h => h.trim());
       const dataLines = lines.slice(1);
       let successCount = 0;
 
       for (const line of dataLines) {
-        const values = line.split(',').map(v => v.trim());
+        const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
         const row: any = {};
         headers.forEach((h, i) => row[h] = values[i]);
 
-        if (!row.bank) continue;
+        const bankName = row['Name'] || row['Bank'];
+        if (!bankName) continue;
 
         try {
           // Find or create bank
           let bankId = '';
-          const existingBanks = banks?.filter(b => b.name.toLowerCase() === row.bank.toLowerCase());
+          const existingBanks = banks?.filter(b => b.name.toLowerCase() === bankName.toLowerCase());
           if (existingBanks && existingBanks.length > 0) {
             bankId = existingBanks[0].id;
           } else {
-            const newBank = await addBank.mutateAsync(row.bank);
+            const newBank = await addBank.mutateAsync(bankName);
             bankId = newBank.id;
           }
+
+          // Parse dates DD.MM.YYYY to YYYY-MM-DD
+          const parseDate = (d: string) => {
+            if (!d) return format(new Date(), 'yyyy-MM-dd');
+            const parts = d.split(/[.-/]/);
+            if (parts.length === 3) {
+              return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+            return d;
+          };
 
           // Add FD
           await addFD.mutateAsync({
             bankId,
-            holderName: row.holder || user.displayName || 'Unknown',
-            accountNumber: row.account || '',
-            principalAmount: Number(row.principal) || 0,
-            interestRate: Number(row.interest) || 0,
-            startDate: row.start || format(new Date(), 'yyyy-MM-dd'),
-            maturityDate: row.maturity || format(addYears(new Date(), 1), 'yyyy-MM-dd'),
+            holderName: row['Remarks'] || row['Holder'] || user.displayName || 'Unknown',
+            accountNumber: row['Sr no'] || '',
+            principalAmount: Number(row['AMT']?.replace(/[^0-9.]/g, '')) || 0,
+            interestRate: Number(row['Int Rate']?.replace(/[^0-9.]/g, '')) || 0,
+            startDate: parseDate(row['Open Date'] || row['Start']),
+            maturityDate: parseDate(row['Close Date'] || row['Maturity']),
             status: 'ACTIVE'
           });
           successCount++;
