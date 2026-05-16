@@ -108,7 +108,7 @@ const Dashboard: React.FC = () => {
           <p className="text-muted-foreground text-lg">Welcome back, {user?.displayName || 'Abhijit'}!</p>
         </motion.div>
 
-        {user?.email === 'abhijit.harry@gmail.com' && (
+        {(user?.email === 'abhijit.harry@gmail.com' || user?.email === 'testuser@arc.com') && (
           <button 
             onClick={seedTestData}
             className="flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 rounded-xl font-bold border border-accent/20 hover:bg-accent/20 transition-all interactive-scale"
