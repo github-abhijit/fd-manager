@@ -38,8 +38,8 @@ async function cleanAccount(email, password) {
 }
 
 async function main() {
-  await cleanAccount('testuser@arc.com', 'testuser1');
-  //await cleanAccount('raosaheb.c4@gmail.com', 'RSC@1956'); // Trying default test password
+  // await cleanAccount('testuser@arc.com', 'testuser1');
+  await cleanAccount('raosaheb.c4@gmail.com', 'RSC@1956');
   process.exit(0);
 }
 

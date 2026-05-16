@@ -11,7 +11,7 @@ import {
   Plus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { format, parseISO, addMonths, isAfter, isBefore } from 'date-fns';
+import { format, parseISO, isAfter } from 'date-fns';
 
 const Dashboard: React.FC = () => {
   const { data: banks } = useBanks();
@@ -24,11 +24,9 @@ const Dashboard: React.FC = () => {
     ? (fds.reduce((acc, curr) => acc + curr.interestRate, 0) / fds.length).toFixed(2)
     : 0;
   
-  const maturingSoon = fds?.filter(fd => {
-    const maturityDate = parseISO(fd.maturityDate);
-    const thirtyDaysFromNow = addMonths(new Date(), 1);
-    return isBefore(maturityDate, thirtyDaysFromNow) && isAfter(maturityDate, new Date());
-  }) || [];
+  const pendingFDs = fds?.filter(fd => {
+    return fd.status === 'ACTIVE' || isAfter(parseISO(fd.maturityDate), new Date());
+  }).sort((a, b) => parseISO(a.maturityDate).getTime() - parseISO(b.maturityDate).getTime()) || [];
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -194,50 +192,70 @@ const Dashboard: React.FC = () => {
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <AlertCircle className="w-6 h-6 text-primary" />
-            Next Visit Alerts
+            Upcoming Bank Visits
           </h2>
           <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
-            {maturingSoon.length} Records Maturing Soon
+            {pendingFDs.length} Active Records
           </span>
         </div>
 
-        {maturingSoon.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {maturingSoon.map(fd => (
-              <motion.div 
-                key={fd.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="glass-card p-6 border-l-4 border-l-primary flex flex-col justify-between gap-6"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1">
-                    <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Bank Visit Needed</p>
-                    <p className="text-3xl font-black text-primary">
-                      {format(parseISO(fd.maturityDate), 'dd MMM yyyy')}
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-2xl bg-primary/10 text-primary">
-                    <Calendar className="w-8 h-8" />
+        {pendingFDs.length > 0 ? (
+          <div className="space-y-8">
+            {(() => {
+              const groupedFDs = pendingFDs.reduce((groups: any, fd) => {
+                const monthYear = format(parseISO(fd.maturityDate), 'MMMM yyyy');
+                if (!groups[monthYear]) {
+                  groups[monthYear] = [];
+                }
+                groups[monthYear].push(fd);
+                return groups;
+              }, {});
+
+              return Object.keys(groupedFDs).map(monthYear => (
+                <div key={monthYear} className="space-y-4">
+                  <h4 className="text-lg font-bold text-muted-foreground flex items-center gap-2 border-b border-primary/10 pb-2">
+                    <Calendar className="w-5 h-5" />
+                    {monthYear}
+                    <span className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full ml-2">
+                      {groupedFDs[monthYear].length}
+                    </span>
+                  </h4>
+                  <div className="space-y-3">
+                    {groupedFDs[monthYear].map((fd: any) => (
+                      <motion.div 
+                        key={fd.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="glass-card flex flex-col md:flex-row md:items-center justify-between p-5 hover:shadow-lg transition-all border-l-4 border-l-primary"
+                      >
+                        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+                          <div>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Bank</p>
+                            <p className="font-bold text-lg truncate leading-tight">{banks?.find(b => b.id === fd.bankId)?.name}</p>
+                            <p className="text-[10px] text-muted-foreground">Holder: {fd.holderName}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Amount</p>
+                            <p className="font-black text-primary text-lg leading-tight">{formatCurrency(fd.principalAmount)}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Yield</p>
+                            <p className="font-bold text-lg leading-tight">{fd.interestRate}%</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Date</p>
+                            <div className="flex items-center gap-1.5 font-black text-foreground text-lg">
+                              <Calendar className="w-4 h-4 text-primary" />
+                              {format(parseISO(fd.maturityDate), 'dd MMM yyyy')}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
                 </div>
-                
-                <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground font-medium">Bank</span>
-                    <span className="font-bold">{banks?.find(b => b.id === fd.bankId)?.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground font-medium">Amount</span>
-                    <span className="font-bold">{formatCurrency(fd.principalAmount)}</span>
-                  </div>
-                  <div className="flex justify-between border-t pt-2 mt-2 border-primary/10">
-                    <span className="text-muted-foreground font-medium">Holder</span>
-                    <span className="font-bold text-primary">{fd.holderName}</span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+              ));
+            })()}
           </div>
         ) : (
           <div className="glass-card p-12 text-center">
@@ -245,13 +263,14 @@ const Dashboard: React.FC = () => {
               <ShieldCheck className="w-12 h-12 text-primary" />
             </div>
             <h3 className="text-xl font-bold">You're all set!</h3>
-            <p className="text-muted-foreground text-lg">No FDs are maturing in the next 30 days.</p>
+            <p className="text-muted-foreground text-lg">No upcoming records found.</p>
           </div>
         )}
       </div>
     </div>
   );
 };
+
 
 const StatCard = ({ title, value, icon, color }: any) => {
   const colorMap: any = {
