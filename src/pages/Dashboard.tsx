@@ -49,9 +49,22 @@ const Dashboard: React.FC = () => {
       if (lines.length < 2) return;
 
       const splitCSV = (row: string) => {
-        const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-        if (!matches) return row.split(',').map(v => v.trim());
-        return matches.map(v => v.replace(/^"|"$/g, '').trim());
+        const result = [];
+        let cur = '';
+        let inQuotes = false;
+        for (let i = 0; i < row.length; i++) {
+          const char = row[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(cur.trim());
+            cur = '';
+          } else {
+            cur += char;
+          }
+        }
+        result.push(cur.trim());
+        return result;
       };
 
       const headers = splitCSV(lines[0]);
