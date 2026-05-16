@@ -45,7 +45,7 @@ const FDForm: React.FC<FDFormProps> = ({ banks, onSuccess, initialData }) => {
           <select
             value={formData.bankId}
             onChange={(e) => setFormData({ ...formData, bankId: e.target.value })}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             required
           >
             <option value="" disabled>Select Bank</option>
@@ -62,7 +62,7 @@ const FDForm: React.FC<FDFormProps> = ({ banks, onSuccess, initialData }) => {
             value={formData.holderName}
             onChange={(e) => setFormData({ ...formData, holderName: e.target.value })}
             placeholder="Name on FD"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             required
           />
         </div>
@@ -74,7 +74,7 @@ const FDForm: React.FC<FDFormProps> = ({ banks, onSuccess, initialData }) => {
             value={formData.accountNumber}
             onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
             placeholder="Last 4 digits"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all"
           />
         </div>
 
@@ -85,7 +85,7 @@ const FDForm: React.FC<FDFormProps> = ({ banks, onSuccess, initialData }) => {
             value={formData.principalAmount}
             onChange={(e) => setFormData({ ...formData, principalAmount: Number(e.target.value) })}
             placeholder="₹ Amount"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             required
           />
         </div>
@@ -98,7 +98,7 @@ const FDForm: React.FC<FDFormProps> = ({ banks, onSuccess, initialData }) => {
             value={formData.interestRate}
             onChange={(e) => setFormData({ ...formData, interestRate: Number(e.target.value) })}
             placeholder="e.g. 7.1"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             required
           />
         </div>
@@ -109,7 +109,7 @@ const FDForm: React.FC<FDFormProps> = ({ banks, onSuccess, initialData }) => {
             type="date"
             value={formData.startDate}
             onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             required
           />
         </div>
@@ -120,7 +120,7 @@ const FDForm: React.FC<FDFormProps> = ({ banks, onSuccess, initialData }) => {
             type="date"
             value={formData.maturityDate}
             onChange={(e) => setFormData({ ...formData, maturityDate: e.target.value })}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             required
           />
         </div>

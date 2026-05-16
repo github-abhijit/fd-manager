@@ -11,6 +11,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navItems = [
     { icon: <LayoutDashboard />, label: 'Dashboard', path: '/' },
     { icon: <Library />, label: 'Inventory', path: '/inventory' },
+    { icon: <User />, label: 'Profile', path: '/profile' },
   ];
 
   return (

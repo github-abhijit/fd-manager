@@ -31,7 +31,7 @@ const BankForm: React.FC<BankFormProps> = ({ onSuccess }) => {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. HDFC Bank"
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+          className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all"
           required
         />
       </div>
