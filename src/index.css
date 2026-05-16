@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #4F46E5;
-  --color-primary-dark: #4338CA;
+  --color-primary: #10B981; /* Emerald 500 */
+  --color-primary-dark: #059669; /* Emerald 600 */
+  --color-secondary: #6366F1; /* Indigo 500 */
+  --color-accent: #F43F5E; /* Rose 500 */
   --color-success: #10B981;
-  --color-success-dark: #059669;
   --color-warning: #F59E0B;
-  --color-warning-dark: #D97706;
-
+  
   --font-sans: "Inter", sans-serif;
   --font-display: "Outfit", sans-serif;
 
@@ -19,24 +19,50 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap');
 
 :root {
-  --background: 222.2 84% 4.9%; /* Using HSL values directly for better variable support */
+  --background: 210 40% 98%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --primary: 142.1 70.6% 45.3%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 226.3 70% 63.9%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 346.8 77.2% 49.8%;
+  --accent-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 142.1 70.6% 45.3%;
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
   --card: 222.2 84% 4.9%;
   --card-foreground: 210 40% 98%;
-  --primary: 243.4 75.4% 58.6%;
-  --border: 217.2 32.6% 17.5%;
+  --primary: 142.1 70.6% 45.3%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 226.3 70% 63.9%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
   --muted-foreground: 215 20.2% 65.1%;
+  --accent: 346.8 77.2% 49.8%;
+  --accent-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 142.1 70.6% 45.3%;
 }
 
 @utility glass {
-  background-color: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .dark @utility glass {
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(12px);
+  background-color: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -60,6 +86,7 @@
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+    font-weight: 700;
   }
 }
 

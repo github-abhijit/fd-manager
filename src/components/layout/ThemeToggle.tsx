@@ -1,21 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 
 const ThemeToggle: React.FC = () => {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
-      return document.documentElement.classList.contains('dark') || 
-             (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      return localStorage.getItem('theme') === 'dark' || 
+             (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
     }
     return false;
   });
 
   useEffect(() => {
+    const root = window.document.documentElement;
     if (isDark) {
-      document.documentElement.classList.add('dark');
+      root.classList.add('dark');
       localStorage.setItem('theme', 'dark');
     } else {
-      document.documentElement.classList.remove('dark');
+      root.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
   }, [isDark]);
@@ -23,10 +24,14 @@ const ThemeToggle: React.FC = () => {
   return (
     <button
       onClick={() => setIsDark(!isDark)}
-      className="p-2 rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors interactive-scale"
+      className="p-3 rounded-2xl glass hover:bg-primary/10 transition-all interactive-scale shadow-lg"
       aria-label="Toggle Theme"
     >
-      {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      {isDark ? (
+        <Sun className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+      ) : (
+        <Moon className="w-5 h-5 text-indigo-600 fill-indigo-600" />
+      )}
     </button>
   );
 };
