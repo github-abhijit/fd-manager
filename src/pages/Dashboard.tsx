@@ -228,7 +228,7 @@ const Dashboard: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         className="glass-card flex flex-col md:flex-row md:items-center justify-between p-5 hover:shadow-lg transition-all border-l-4 border-l-primary"
                       >
-                        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+                        <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-4 items-center">
                           <div>
                             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Bank</p>
                             <p className="font-bold text-lg truncate leading-tight">{banks?.find(b => b.id === fd.bankId)?.name}</p>
@@ -243,7 +243,13 @@ const Dashboard: React.FC = () => {
                             <p className="font-bold text-lg leading-tight">{fd.interestRate}%</p>
                           </div>
                           <div>
-                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Date</p>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Start Date</p>
+                            <div className="flex items-center gap-1.5 font-bold text-foreground text-lg">
+                              {format(parseISO(fd.startDate), 'dd MMM yyyy')}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Maturity</p>
                             <div className="flex items-center gap-1.5 font-black text-foreground text-lg">
                               <Calendar className="w-4 h-4 text-primary" />
                               {format(parseISO(fd.maturityDate), 'dd MMM yyyy')}

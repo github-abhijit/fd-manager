@@ -343,7 +343,7 @@ const FDListItem = ({ fd, formatCurrency, onEdit, onRenew, onDelete }: { fd: any
     exit={{ opacity: 0, scale: 0.95 }}
     className="glass-card flex flex-col md:flex-row md:items-center justify-between p-5 group hover:shadow-lg transition-all border-l-4 border-l-primary"
   >
-    <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+    <div className="flex-1 grid grid-cols-2 md:grid-cols-5 gap-4 items-center">
       <div>
         <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Holder</p>
         <p className="font-bold text-lg truncate leading-tight">{fd.holderName}</p>
@@ -356,6 +356,12 @@ const FDListItem = ({ fd, formatCurrency, onEdit, onRenew, onDelete }: { fd: any
       <div>
         <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Yield</p>
         <p className="font-bold text-lg leading-tight">{fd.interestRate}%</p>
+      </div>
+      <div>
+        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Start Date</p>
+        <div className="flex items-center gap-1.5 font-bold text-foreground">
+          {format(parseISO(fd.startDate), 'dd MMM yyyy')}
+        </div>
       </div>
       <div>
         <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Maturity</p>
