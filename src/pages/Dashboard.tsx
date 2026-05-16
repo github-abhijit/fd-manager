@@ -1,22 +1,17 @@
 import React from 'react';
-import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import { useBanks, useFixedDeposits, useFirestoreMutations } from '../hooks/useFirestore';
 import { useAuth } from '../hooks/useAuth';
 import { 
   TrendingUp, 
   AlertCircle, 
-  ArrowUpRight, 
-  ArrowDownRight, 
   Calendar,
   Wallet,
   Landmark,
   ShieldCheck,
-  Database,
   Plus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { format, parseISO, addMonths, addYears, isAfter, isBefore } from 'date-fns';
+import { format, parseISO, addMonths, isAfter, isBefore } from 'date-fns';
 
 const Dashboard: React.FC = () => {
   const { data: banks } = useBanks();
@@ -43,62 +38,6 @@ const Dashboard: React.FC = () => {
     }).format(amount);
   };
 
-  const seedTestData = async () => {
-    if (!user) return;
-    try {
-      // 1. Clear existing data for this user first
-      const banksSnapshot = await getDocs(query(collection(db, 'banks'), where('userId', '==', user.uid)));
-      const fdsSnapshot = await getDocs(query(collection(db, 'fixedDeposits'), where('userId', '==', user.uid)));
-      
-      for (const d of banksSnapshot.docs) { await deleteDoc(doc(db, 'banks', d.id)); }
-      for (const d of fdsSnapshot.docs) { await deleteDoc(doc(db, 'fixedDeposits', d.id)); }
-
-      // 2. Add Banks
-      const hdfc = await addBank.mutateAsync("HDFC Bank");
-      const sbi = await addBank.mutateAsync("State Bank of India");
-      const icici = await addBank.mutateAsync("ICICI Bank");
-
-      // 3. Add FDs
-      await addFD.mutateAsync({
-        bankId: hdfc.id,
-        holderName: user.displayName || "Abhijit Harry",
-        accountNumber: "9901",
-        principalAmount: 500000,
-        interestRate: 7.2,
-        startDate: format(new Date(), 'yyyy-MM-dd'),
-        maturityDate: format(addYears(new Date(), 1), 'yyyy-MM-dd'),
-        status: 'ACTIVE'
-      });
-
-      await addFD.mutateAsync({
-        bankId: sbi.id,
-        holderName: user.displayName || "Abhijit Harry",
-        accountNumber: "4452",
-        principalAmount: 250000,
-        interestRate: 6.8,
-        startDate: format(addMonths(new Date(), -6), 'yyyy-MM-dd'),
-        maturityDate: format(addMonths(new Date(), 1), 'yyyy-MM-dd'),
-        status: 'ACTIVE'
-      });
-
-      await addFD.mutateAsync({
-        bankId: icici.id,
-        holderName: user.displayName || "Abhijit Harry",
-        accountNumber: "1288",
-        principalAmount: 1000000,
-        interestRate: 7.5,
-        startDate: format(new Date(), 'yyyy-MM-dd'),
-        maturityDate: format(addYears(new Date(), 2), 'yyyy-MM-dd'),
-        status: 'ACTIVE'
-      });
-
-      alert("Test data seeded successfully! Existing data was cleared first.");
-    } catch (err) {
-      console.error(err);
-      alert("Error seeding data. Check console.");
-    }
-  };
-
   const handleCSVImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -109,14 +48,12 @@ const Dashboard: React.FC = () => {
       const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
       if (lines.length < 2) return;
 
-      // Better CSV parser that handles quotes
       const splitCSV = (row: string) => {
         const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
         if (!matches) return row.split(',').map(v => v.trim());
         return matches.map(v => v.replace(/^"|"$/g, '').trim());
       };
 
-      // Header cleanup
       const headers = splitCSV(lines[0]);
       const dataLines = lines.slice(1);
       let successCount = 0;
@@ -128,14 +65,12 @@ const Dashboard: React.FC = () => {
           if (values[i] !== undefined) row[h.trim()] = values[i];
         });
 
-        // Smart Map
         const bankName = row['Name'] || row['Bank'] || row['bank'];
         const principal = row['AMT'] || row['Principal'] || row['principal'];
         
         if (!bankName || !principal) continue;
 
         try {
-          // Find or create bank
           let bankId = '';
           const existingBanks = banks?.filter(b => b.name.toLowerCase() === bankName.toLowerCase());
           if (existingBanks && existingBanks.length > 0) {
@@ -145,10 +80,8 @@ const Dashboard: React.FC = () => {
             bankId = newBank.id;
           }
 
-          // Parse dates DD.MM.YYYY to YYYY-MM-DD
           const parseDate = (d: string) => {
             if (!d) return format(new Date(), 'yyyy-MM-dd');
-            // Handle cases like "25.06,2026"
             const cleaned = d.replace(',', '.');
             const parts = cleaned.split(/[.-/]/);
             if (parts.length === 3) {
@@ -160,7 +93,6 @@ const Dashboard: React.FC = () => {
             return d;
           };
 
-          // Add FD
           await addFD.mutateAsync({
             bankId,
             holderName: row['Remarks'] || row['Holder'] || row['remarks'] || user.displayName || 'Unknown',
@@ -176,7 +108,7 @@ const Dashboard: React.FC = () => {
           console.error("Error importing row:", line, err);
         }
       }
-      alert(`Import complete! Successfully added ${successCount} records.`);
+      alert(`Import complete! Added ${successCount} records.`);
     };
     reader.readAsText(file);
   };
@@ -196,48 +128,35 @@ const Dashboard: React.FC = () => {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          <h1 className="text-4xl font-bold tracking-tight">Financial Overview</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-foreground">Financial Overview</h1>
           <p className="text-muted-foreground text-lg">Welcome back, {user?.displayName || 'Abhijit'}!</p>
         </motion.div>
 
         {(user?.email === 'abhijit.harry@gmail.com' || user?.email === 'testuser@arc.com' || user?.email === 'raosaheb.c4@gmail.com') && (
-          <div className="flex gap-3">
-            <label className="flex items-center gap-2 bg-secondary/10 text-secondary px-4 py-2 rounded-xl font-bold border border-secondary/20 hover:bg-secondary/20 transition-all cursor-pointer interactive-scale">
-              <Plus className="w-4 h-4" />
-              Import CSV
-              <input 
-                type="file" 
-                accept=".csv" 
-                className="hidden" 
-                onChange={(e) => handleCSVImport(e)}
-              />
-            </label>
-            <button 
-              onClick={seedTestData}
-              className="flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 rounded-xl font-bold border border-accent/20 hover:bg-accent/20 transition-all interactive-scale"
-            >
-              <Database className="w-4 h-4" />
-              Reset & Seed
-            </button>
-          </div>
+          <label className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all cursor-pointer interactive-scale">
+            <Plus className="w-5 h-5" />
+            Bulk Import CSV
+            <input 
+              type="file" 
+              accept=".csv" 
+              className="hidden" 
+              onChange={(e) => handleCSVImport(e)}
+            />
+          </label>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard 
           title="Total Principal" 
           value={formatCurrency(totalPrincipal)} 
           icon={<Wallet className="w-6 h-6" />}
-          trend="+₹12,400"
-          isUp={true}
           color="primary"
         />
         <StatCard 
-          title="Avg. Interest" 
+          title="Avg. Interest Rate" 
           value={`${avgInterest}%`} 
           icon={<TrendingUp className="w-6 h-6" />}
-          trend="+0.2%"
-          isUp={true}
           color="secondary"
         />
         <StatCard 
@@ -246,97 +165,72 @@ const Dashboard: React.FC = () => {
           icon={<Landmark className="w-6 h-6" />}
           color="accent"
         />
-        <StatCard 
-          title="Security Score" 
-          value="98/100" 
-          icon={<ShieldCheck className="w-6 h-6" />}
-          color="success"
-        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              <AlertCircle className="w-6 h-6 text-primary" />
-              Maturity Alerts
-            </h2>
-            <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
-              {maturingSoon.length} Pending
-            </span>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <AlertCircle className="w-6 h-6 text-primary" />
+            Next Visit Alerts
+          </h2>
+          <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
+            {maturingSoon.length} Records Maturing Soon
+          </span>
+        </div>
+
+        {maturingSoon.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {maturingSoon.map(fd => (
+              <motion.div 
+                key={fd.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-card p-6 border-l-4 border-l-primary flex flex-col justify-between gap-6"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Bank Visit Needed</p>
+                    <p className="text-3xl font-black text-primary">
+                      {format(parseISO(fd.maturityDate), 'dd MMM yyyy')}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-primary/10 text-primary">
+                    <Calendar className="w-8 h-8" />
+                  </div>
+                </div>
+                
+                <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground font-medium">Bank</span>
+                    <span className="font-bold">{banks?.find(b => b.id === fd.bankId)?.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground font-medium">Amount</span>
+                    <span className="font-bold">{formatCurrency(fd.principalAmount)}</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-2 mt-2 border-primary/10">
+                    <span className="text-muted-foreground font-medium">Holder</span>
+                    <span className="font-bold text-primary">{fd.holderName}</span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
-
-          {maturingSoon.length > 0 ? (
-            <div className="space-y-4">
-              {maturingSoon.map(fd => (
-                <motion.div 
-                  key={fd.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="glass-card p-5 border-l-4 border-l-primary flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-2xl bg-primary/10 text-primary">
-                      <Calendar className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-lg">{fd.holderName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Maturing on {format(parseISO(fd.maturityDate), 'dd MMM yyyy')}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <p className="text-xs font-bold uppercase text-muted-foreground">Principal</p>
-                      <p className="font-bold text-lg">{formatCurrency(fd.principalAmount)}</p>
-                    </div>
-                    <button className="bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-primary/20 interactive-scale">
-                      Action
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
+        ) : (
+          <div className="glass-card p-12 text-center">
+            <div className="p-4 rounded-full bg-primary/10 w-fit mx-auto mb-4">
+              <ShieldCheck className="w-12 h-12 text-primary" />
             </div>
-          ) : (
-            <div className="glass-card p-12 text-center">
-              <div className="p-4 rounded-full bg-primary/10 w-fit mx-auto mb-4">
-                <ShieldCheck className="w-10 h-10 text-primary" />
-              </div>
-              <p className="text-muted-foreground text-lg">No FDs maturing in the next 30 days. You're all set!</p>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-6">
-           <h2 className="text-2xl font-bold">Insights</h2>
-           <div className="glass-card p-6 space-y-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground font-medium">Monthly Interest</span>
-                  <span className="font-bold text-success">+₹6,200</span>
-                </div>
-                <div className="w-full h-2 bg-secondary/10 rounded-full overflow-hidden">
-                  <div className="w-[70%] h-full bg-primary" />
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground font-medium">Reinvestment Rate</span>
-                  <span className="font-bold text-primary">85%</span>
-                </div>
-                <div className="w-full h-2 bg-secondary/10 rounded-full overflow-hidden">
-                  <div className="w-[85%] h-full bg-secondary" />
-                </div>
-              </div>
-           </div>
-        </div>
+            <h3 className="text-xl font-bold">You're all set!</h3>
+            <p className="text-muted-foreground text-lg">No FDs are maturing in the next 30 days.</p>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-const StatCard = ({ title, value, icon, trend, isUp, color }: any) => {
+const StatCard = ({ title, value, icon, color }: any) => {
   const colorMap: any = {
     primary: 'bg-primary/10 text-primary',
     secondary: 'bg-secondary/10 text-secondary',
@@ -347,22 +241,14 @@ const StatCard = ({ title, value, icon, trend, isUp, color }: any) => {
   return (
     <motion.div 
       whileHover={{ y: -5 }}
-      className="glass-card p-6 space-y-4"
+      className="glass-card p-8 space-y-4"
     >
-      <div className="flex items-center justify-between">
-        <div className={`p-3 rounded-2xl ${colorMap[color]}`}>
-          {icon}
-        </div>
-        {trend && (
-          <div className={`flex items-center gap-1 text-xs font-bold ${isUp ? 'text-success' : 'text-accent'}`}>
-            {isUp ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-            {trend}
-          </div>
-        )}
+      <div className={`p-4 rounded-2xl w-fit ${colorMap[color]}`}>
+        {icon}
       </div>
       <div>
-        <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">{title}</p>
-        <p className="text-3xl font-black mt-1 tracking-tight">{value}</p>
+        <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">{title}</p>
+        <p className="text-4xl font-black mt-2 tracking-tight">{value}</p>
       </div>
     </motion.div>
   );
