@@ -4,6 +4,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
 import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
+import Profile from './pages/Profile';
 import { useAuth } from './hooks/useAuth';
 
 function App() {
@@ -32,6 +33,16 @@ function App() {
             <ProtectedRoute>
               <MainLayout>
                 <Inventory />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Profile />
               </MainLayout>
             </ProtectedRoute>
           } 
