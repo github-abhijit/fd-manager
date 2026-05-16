@@ -1,4 +1,6 @@
 import React from 'react';
+import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { useBanks, useFixedDeposits, useFirestoreMutations } from '../hooks/useFirestore';
 import { useAuth } from '../hooks/useAuth';
 import { 
@@ -43,15 +45,22 @@ const Dashboard: React.FC = () => {
   const seedTestData = async () => {
     if (!user) return;
     try {
-      // Add Banks
+      // 1. Clear existing data for this user first
+      const banksSnapshot = await getDocs(query(collection(db, 'banks'), where('userId', '==', user.uid)));
+      const fdsSnapshot = await getDocs(query(collection(db, 'fixedDeposits'), where('userId', '==', user.uid)));
+      
+      for (const d of banksSnapshot.docs) { await deleteDoc(doc(db, 'banks', d.id)); }
+      for (const d of fdsSnapshot.docs) { await deleteDoc(doc(db, 'fixedDeposits', d.id)); }
+
+      // 2. Add Banks
       const hdfc = await addBank.mutateAsync("HDFC Bank");
       const sbi = await addBank.mutateAsync("State Bank of India");
       const icici = await addBank.mutateAsync("ICICI Bank");
 
-      // Add FDs
+      // 3. Add FDs
       await addFD.mutateAsync({
         bankId: hdfc.id,
-        holderName: "Abhijit Harry",
+        holderName: user.displayName || "Abhijit Harry",
         accountNumber: "9901",
         principalAmount: 500000,
         interestRate: 7.2,
@@ -62,18 +71,18 @@ const Dashboard: React.FC = () => {
 
       await addFD.mutateAsync({
         bankId: sbi.id,
-        holderName: "Abhijit Harry",
+        holderName: user.displayName || "Abhijit Harry",
         accountNumber: "4452",
         principalAmount: 250000,
         interestRate: 6.8,
         startDate: format(addMonths(new Date(), -6), 'yyyy-MM-dd'),
-        maturityDate: format(addMonths(new Date(), 1), 'yyyy-MM-dd'), // Maturing soon
+        maturityDate: format(addMonths(new Date(), 1), 'yyyy-MM-dd'),
         status: 'ACTIVE'
       });
 
       await addFD.mutateAsync({
         bankId: icici.id,
-        holderName: "Abhijit Harry",
+        holderName: user.displayName || "Abhijit Harry",
         accountNumber: "1288",
         principalAmount: 1000000,
         interestRate: 7.5,
@@ -82,7 +91,7 @@ const Dashboard: React.FC = () => {
         status: 'ACTIVE'
       });
 
-      alert("Test data seeded successfully!");
+      alert("Test data seeded successfully! Existing data was cleared first.");
     } catch (err) {
       console.error(err);
       alert("Error seeding data. Check console.");
@@ -119,7 +128,6 @@ const Dashboard: React.FC = () => {
         )}
       </div>
 
-      {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           title="Total Principal" 
@@ -152,7 +160,6 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Maturity Alerts */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -206,7 +213,6 @@ const Dashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Quick Insights */}
         <div className="space-y-6">
            <h2 className="text-2xl font-bold">Insights</h2>
            <div className="glass-card p-6 space-y-6">

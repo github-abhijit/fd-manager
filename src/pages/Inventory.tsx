@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useBanks, useFixedDeposits } from '../hooks/useFirestore';
-import { Plus, Building2, Search, Edit2, RefreshCw, Calendar, ArrowLeft, Landmark, Info } from 'lucide-react';
+import { useBanks, useFixedDeposits, useFirestoreMutations } from '../hooks/useFirestore';
+import { Plus, Building2, Search, Edit2, RefreshCw, Calendar, ArrowLeft, Landmark, Info, Trash2, Database } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO, isAfter } from 'date-fns';
 import Modal from '../components/ui/Modal';
@@ -11,6 +11,7 @@ import RenewalWizard from '../components/inventory/RenewalWizard';
 const Inventory: React.FC = () => {
   const { data: banks, isLoading: banksLoading } = useBanks();
   const { data: fds } = useFixedDeposits();
+  const { deleteBank } = useFirestoreMutations();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
   
@@ -41,6 +42,17 @@ const Inventory: React.FC = () => {
     setRenewingFD(null);
   };
 
+  const handleDeleteBank = async (e: React.MouseEvent, id: string, name: string) => {
+    e.stopPropagation();
+    if (window.confirm(`Are you sure you want to delete ${name}? All associated FDs will also be hidden from this view.`)) {
+      try {
+        await deleteBank.mutateAsync(id);
+      } catch (err) {
+        alert("Failed to delete bank");
+      }
+    }
+  };
+
   const filteredBanks = banks?.filter(bank => 
     bank.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -67,7 +79,6 @@ const Inventory: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-24">
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-2 text-primary font-bold mb-1">
@@ -103,7 +114,6 @@ const Inventory: React.FC = () => {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            {/* Search Bar */}
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <input 
@@ -154,9 +164,17 @@ const Inventory: React.FC = () => {
                           <div className="p-3 rounded-xl bg-primary/10 text-primary">
                             <Building2 className="w-6 h-6" />
                           </div>
-                          <span className="bg-secondary/10 text-secondary text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-widest">
-                            {count} FDs
-                          </span>
+                          <div className="flex gap-2">
+                            <span className="bg-secondary/10 text-secondary text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-widest">
+                              {count} FDs
+                            </span>
+                            <button 
+                              onClick={(e) => handleDeleteBank(e, bank.id, bank.name)}
+                              className="p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                         <div>
                           <h3 className="text-2xl font-bold group-hover:text-primary transition-colors">{bank.name}</h3>
@@ -193,7 +211,6 @@ const Inventory: React.FC = () => {
               Back to Banks
             </button>
 
-            {/* Bank Summary Banner */}
             <div className="glass-card overflow-hidden border-l-4 border-l-primary">
               <div className="p-8 grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div className="md:col-span-1 space-y-2">
@@ -230,10 +247,9 @@ const Inventory: React.FC = () => {
               </div>
             </div>
 
-            {/* FD List Header */}
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold flex items-center gap-2">
-                <Library className="w-5 h-5 text-primary" />
+                <Database className="w-5 h-5 text-primary" />
                 Deposit Records
               </h3>
             </div>
@@ -343,15 +359,6 @@ const FDCard = ({ fd, formatCurrency, onEdit, onRenew }: { fd: any, formatCurren
 const ArrowRight = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-  </svg>
-);
-
-const Library = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v20c0 4.418 7.163 8 16 8 8.837 0 16-3.582 16-8V14c0 4.418-7.163 8-16 8-8.837 0-16-3.582-16-8z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 28c0 4.418 7.163 8 16 8 8.837 0 16-3.582 16-8" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 21c0 4.418 7.163 8 16 8 8.837 0 16-3.582 16-8" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 4.454a32.066 32.066 0 0116 0" />
   </svg>
 );
 
