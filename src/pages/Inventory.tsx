@@ -275,19 +275,44 @@ const Inventory: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <AnimatePresence mode="popLayout">
-                  {bankFDs.map((fd) => (
-                    <FDCard 
-                      key={fd.id} 
-                      fd={fd} 
-                      formatCurrency={formatCurrency}
-                      onEdit={() => handleEditFD(fd)}
-                      onRenew={() => handleRenewFD(fd)}
-                      onDelete={() => handleDeleteFD(fd.id)}
-                    />
-                  ))}
-                </AnimatePresence>
+              <div className="space-y-8">
+                {(() => {
+                  const sortedFDs = [...bankFDs].sort((a, b) => parseISO(a.maturityDate).getTime() - parseISO(b.maturityDate).getTime());
+                  const groupedFDs = sortedFDs.reduce((groups: any, fd) => {
+                    const monthYear = format(parseISO(fd.maturityDate), 'MMMM yyyy');
+                    if (!groups[monthYear]) {
+                      groups[monthYear] = [];
+                    }
+                    groups[monthYear].push(fd);
+                    return groups;
+                  }, {});
+
+                  return Object.keys(groupedFDs).map(monthYear => (
+                    <div key={monthYear} className="space-y-4">
+                      <h4 className="text-lg font-bold text-muted-foreground flex items-center gap-2 border-b border-primary/10 pb-2">
+                        <Calendar className="w-5 h-5" />
+                        {monthYear}
+                        <span className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full ml-2">
+                          {groupedFDs[monthYear].length}
+                        </span>
+                      </h4>
+                      <div className="space-y-3">
+                        <AnimatePresence mode="popLayout">
+                          {groupedFDs[monthYear].map((fd: any) => (
+                            <FDListItem 
+                              key={fd.id} 
+                              fd={fd} 
+                              formatCurrency={formatCurrency}
+                              onEdit={() => handleEditFD(fd)}
+                              onRenew={() => handleRenewFD(fd)}
+                              onDelete={() => handleDeleteFD(fd.id)}
+                            />
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  ));
+                })()}
               </div>
             )}
           </motion.div>
@@ -310,64 +335,53 @@ const Inventory: React.FC = () => {
   );
 };
 
-const FDCard = ({ fd, formatCurrency, onEdit, onRenew, onDelete }: { fd: any, formatCurrency: any, onEdit: () => void, onRenew: () => void, onDelete: () => void }) => (
+const FDListItem = ({ fd, formatCurrency, onEdit, onRenew, onDelete }: { fd: any, formatCurrency: any, onEdit: () => void, onRenew: () => void, onDelete: () => void }) => (
   <motion.div
     layout
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    exit={{ opacity: 0, scale: 0.9 }}
-    className="glass-card overflow-hidden group hover:shadow-2xl transition-all border-t-4 border-t-primary"
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, scale: 0.95 }}
+    className="glass-card flex flex-col md:flex-row md:items-center justify-between p-5 group hover:shadow-lg transition-all border-l-4 border-l-primary"
   >
-    <div className="p-6 space-y-5">
-      <div className="flex justify-between items-start">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg ${
-              fd.status === 'ACTIVE' ? 'bg-primary/10 text-primary' : 
-              fd.status === 'MATURED' ? 'bg-warning/10 text-warning' : 'bg-muted text-muted-foreground'
-            }`}>
-              {fd.status}
-            </span>
-          </div>
-          <h3 className="font-bold text-xl truncate">{fd.holderName}</h3>
-          <p className="text-xs text-muted-foreground font-medium">A/C: {fd.accountNumber || '••••••••'}</p>
-        </div>
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={onEdit} className="p-2 hover:bg-primary/10 rounded-xl transition-colors">
-            <Edit2 className="w-4 h-4 text-primary" />
-          </button>
-          <button onClick={onDelete} className="p-2 hover:bg-destructive/10 rounded-xl transition-colors">
-            <Trash2 className="w-4 h-4 text-destructive" />
-          </button>
+    <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+      <div>
+        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Holder</p>
+        <p className="font-bold text-lg truncate leading-tight">{fd.holderName}</p>
+        <p className="text-[10px] text-muted-foreground">A/C: {fd.accountNumber || '••••••••'}</p>
+      </div>
+      <div>
+        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Amount</p>
+        <p className="font-black text-primary text-lg leading-tight">{formatCurrency(fd.principalAmount)}</p>
+      </div>
+      <div>
+        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Yield</p>
+        <p className="font-bold text-lg leading-tight">{fd.interestRate}%</p>
+      </div>
+      <div>
+        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-0.5">Maturity</p>
+        <div className="flex items-center gap-1.5 font-bold text-foreground">
+          <Calendar className="w-4 h-4 text-primary" />
+          {format(parseISO(fd.maturityDate), 'dd MMM yyyy')}
         </div>
       </div>
-
-      <div className="grid grid-cols-2 gap-4 bg-primary/5 p-4 rounded-2xl border border-primary/10">
-        <div>
-          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Amount</p>
-          <p className="font-black text-lg">{formatCurrency(fd.principalAmount)}</p>
-        </div>
-        <div>
-          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-1">Yield</p>
-          <p className="font-black text-lg text-primary">{fd.interestRate}%</p>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between pt-2">
-        <div className="flex items-center gap-2 text-muted-foreground bg-secondary/10 px-3 py-1.5 rounded-xl border border-secondary/10">
-          <Calendar className="w-3.5 h-3.5" />
-          <span className="text-xs font-bold">
-            {format(parseISO(fd.maturityDate), 'dd MMM yyyy')}
-          </span>
-        </div>
-        <button 
-          onClick={onRenew}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-xs font-bold interactive-scale shadow-lg shadow-primary/20"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          Renew
-        </button>
-      </div>
+    </div>
+    
+    <div className="flex items-center gap-2 mt-4 md:mt-0 justify-end md:opacity-0 md:group-hover:opacity-100 transition-opacity border-t border-primary/10 md:border-t-0 pt-4 md:pt-0">
+      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg mr-2 ${
+        fd.status === 'ACTIVE' ? 'bg-primary/10 text-primary' : 
+        fd.status === 'MATURED' ? 'bg-warning/10 text-warning' : 'bg-muted text-muted-foreground'
+      }`}>
+        {fd.status}
+      </span>
+      <button onClick={onRenew} className="p-2 bg-success/10 hover:bg-success/20 text-success rounded-xl transition-colors tooltip" title="Renew">
+        <RefreshCw className="w-4 h-4" />
+      </button>
+      <button onClick={onEdit} className="p-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl transition-colors tooltip" title="Edit">
+        <Edit2 className="w-4 h-4" />
+      </button>
+      <button onClick={onDelete} className="p-2 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded-xl transition-colors tooltip" title="Delete">
+        <Trash2 className="w-4 h-4" />
+      </button>
     </div>
   </motion.div>
 );
