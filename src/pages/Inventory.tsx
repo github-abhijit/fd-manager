@@ -115,7 +115,16 @@ const Inventory: React.FC = () => {
                   <Building2 className="w-12 h-12 text-primary" />
                 </div>
                 <h3 className="text-xl font-bold">No banks found</h3>
-                <p className="text-muted-foreground max-w-xs mx-auto mt-2">Add your first bank to start tracking your deposits.</p>
+                <p className="text-muted-foreground max-w-xs mx-auto mt-2 mb-6">Add your first bank to start tracking your deposits.</p>
+                <div className="flex gap-3 justify-center">
+                  <button 
+                    onClick={() => setIsBankModalOpen(true)}
+                    className="flex items-center gap-2 bg-secondary text-secondary-foreground px-6 py-3 rounded-2xl font-bold interactive-scale"
+                  >
+                    <Building2 className="w-5 h-5" />
+                    Add Bank
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
