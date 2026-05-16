@@ -106,20 +106,33 @@ const Dashboard: React.FC = () => {
     const reader = new FileReader();
     reader.onload = async (event) => {
       const text = event.target?.result as string;
-      const lines = text.split('\n').filter(line => line.trim() !== '');
+      const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
       if (lines.length < 2) return;
 
-      const headers = lines[0].split(',').map(h => h.trim());
+      // Better CSV parser that handles quotes
+      const splitCSV = (row: string) => {
+        const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+        if (!matches) return row.split(',').map(v => v.trim());
+        return matches.map(v => v.replace(/^"|"$/g, '').trim());
+      };
+
+      // Header cleanup
+      const headers = splitCSV(lines[0]);
       const dataLines = lines.slice(1);
       let successCount = 0;
 
       for (const line of dataLines) {
-        const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+        const values = splitCSV(line);
         const row: any = {};
-        headers.forEach((h, i) => row[h] = values[i]);
+        headers.forEach((h, i) => {
+          if (values[i] !== undefined) row[h.trim()] = values[i];
+        });
 
-        const bankName = row['Name'] || row['Bank'];
-        if (!bankName) continue;
+        // Smart Map
+        const bankName = row['Name'] || row['Bank'] || row['bank'];
+        const principal = row['AMT'] || row['Principal'] || row['principal'];
+        
+        if (!bankName || !principal) continue;
 
         try {
           // Find or create bank
@@ -135,9 +148,14 @@ const Dashboard: React.FC = () => {
           // Parse dates DD.MM.YYYY to YYYY-MM-DD
           const parseDate = (d: string) => {
             if (!d) return format(new Date(), 'yyyy-MM-dd');
-            const parts = d.split(/[.-/]/);
+            // Handle cases like "25.06,2026"
+            const cleaned = d.replace(',', '.');
+            const parts = cleaned.split(/[.-/]/);
             if (parts.length === 3) {
-              return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+              const day = parts[0].padStart(2, '0');
+              const month = parts[1].padStart(2, '0');
+              const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+              return `${year}-${month}-${day}`;
             }
             return d;
           };
@@ -145,12 +163,12 @@ const Dashboard: React.FC = () => {
           // Add FD
           await addFD.mutateAsync({
             bankId,
-            holderName: row['Remarks'] || row['Holder'] || user.displayName || 'Unknown',
-            accountNumber: row['Sr no'] || '',
-            principalAmount: Number(row['AMT']?.replace(/[^0-9.]/g, '')) || 0,
-            interestRate: Number(row['Int Rate']?.replace(/[^0-9.]/g, '')) || 0,
-            startDate: parseDate(row['Open Date'] || row['Start']),
-            maturityDate: parseDate(row['Close Date'] || row['Maturity']),
+            holderName: row['Remarks'] || row['Holder'] || row['remarks'] || user.displayName || 'Unknown',
+            accountNumber: row['Sr no'] || row['Account'] || '',
+            principalAmount: Number(principal.replace(/[^0-9.]/g, '')) || 0,
+            interestRate: Number((row['Int Rate'] || '0').replace(/[^0-9.]/g, '')) || 0,
+            startDate: parseDate(row['Open Date'] || row['Start'] || row['date']),
+            maturityDate: parseDate(row['Close Date'] || row['Maturity'] || row['due']),
             status: 'ACTIVE'
           });
           successCount++;
