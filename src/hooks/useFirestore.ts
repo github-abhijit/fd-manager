@@ -6,8 +6,7 @@ import {
   getDocs, 
   addDoc, 
   updateDoc, 
-  doc, 
-  orderBy
+  doc
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from './useAuth';
@@ -43,8 +42,7 @@ export const useBanks = () => {
       if (!user) return [];
       const q = query(
         collection(db, 'banks'), 
-        where('userId', '==', user.uid),
-        orderBy('name')
+        where('userId', '==', user.uid)
       );
       const snapshot = await getDocs(q);
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Bank[];
@@ -62,8 +60,7 @@ export const useFixedDeposits = (bankId?: string) => {
       if (!user) return [];
       let q = query(
         collection(db, 'fixedDeposits'), 
-        where('userId', '==', user.uid),
-        orderBy('maturityDate', 'asc')
+        where('userId', '==', user.uid)
       );
       
       if (bankId && bankId !== 'all') {

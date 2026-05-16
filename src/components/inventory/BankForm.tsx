@@ -16,8 +16,9 @@ const BankForm: React.FC<BankFormProps> = ({ onSuccess }) => {
     try {
       await addBank.mutateAsync(name);
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      alert("Error: " + (error.message || "Failed to save bank. Check your Firestore rules."));
     }
   };
 

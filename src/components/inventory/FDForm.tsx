@@ -31,8 +31,9 @@ const FDForm: React.FC<FDFormProps> = ({ banks, onSuccess, initialData }) => {
         await addFD.mutateAsync(formData);
       }
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      alert("Error: " + (error.message || "Failed to save FD record. Check your Firestore rules."));
     }
   };
 
