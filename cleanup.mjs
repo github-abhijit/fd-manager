@@ -3,9 +3,9 @@ import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCeQc8lJic6jP9jVeHPBCO3FkTHdWyXfjk",
-  authDomain: "fd-manager-31183.firebaseapp.com",
-  projectId: "fd-manager-31183",
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -39,7 +39,7 @@ async function cleanAccount(email, password) {
 
 async function main() {
   // await cleanAccount('testuser@arc.com', 'testuser1');
-  await cleanAccount('raosaheb.c4@gmail.com', 'RSC@1956');
+  await cleanAccount('username', 'password');
   process.exit(0);
 }
 
